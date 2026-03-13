@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Timer Manual Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .timer-display {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .timer-complete {
+            color: green;
+            font-size: 24px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>Focus Timer Manual Test</h1>
+    <div id="timer-container"></div>
+    
+    <div id="test-results">
+        <h2>Test Results:</h2>
+        <ul id="results-list"></ul>
+    </div>
+
+    <script type="module">
+        // Import the FocusTimer class
+        import FocusTimer from '../js/focusTimer.js';
+
+        const container = document.getElementById('timer-container');
+        const resultsList = document.getElementById('results-list');
+        
+        function addResult(message, passed) {
+            const li = document.createElement('li');
+            li.textContent = message;
+            li.style.color = passed ? 'green' : 'red';
+            resultsList.appendChild(li);
+        }
+
+        // Create timer instance
+        const timer = new FocusTimer(container);
+        
+        // Test 1: formatTime() with various values
+        addResult('formatTime(1500) = "25:00": ' + timer.formatTime(1500), timer.formatTime(1500) === '25:00');
+        addResult('formatTime(0) = "00:00": ' + timer.formatTime(0), timer.formatTime(0) === '00:00');
+        addResult('formatTime(59) = "00:59": ' + timer.formatTime(59), timer.formatTime(59) === '00:59');
+        addResult('formatTime(60) = "01:00": ' + timer.formatTime(60), timer.formatTime(60) === '01:00');
+        addResult('formatTime(1499) = "24:59": ' + timer.formatTime(1499), timer.formatTime(1499) === '24:59');
+        
+        // Test 2: init() renders display
+        timer.init();
+        const display = container.querySelector('.timer-display');
+        addResult('init() renders timer display', display !== null);
+        addResult('Initial display shows "25:00"', display.textContent === '25:00');
+        
+        // Test 3: Control buttons exist
+        const startBtn = container.querySelector('.btn-start');
+        const stopBtn = container.querySelector('.btn-stop');
+        const resetBtn = container.querySelector('.btn-reset');
+        addResult('Start button exists', startBtn !== null);
+        addResult('Stop button exists', stopBtn !== null);
+        addResult('Reset button exists', resetBtn !== null);
+        
+        // Test 4: Button states
+        addResult('Stop button is disabled initially', stopBtn.disabled === true);
+        addResult('Start button is enabled initially', startBtn.disabled === false);
+        
+        console.log('Manual test page loaded. Use the timer controls to test functionality.');
+    </script>
+</body>
+</html>

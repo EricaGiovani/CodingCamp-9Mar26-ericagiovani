@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StorageService Manual Tests</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .test { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+    .pass { background-color: #d4edda; border-color: #c3e6cb; }
+    .fail { background-color: #f8d7da; border-color: #f5c6cb; }
+    h1 { color: #333; }
+    h2 { color: #666; margin-top: 20px; }
+    button { margin: 10px 5px; padding: 8px 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>StorageService Manual Tests</h1>
+  <button onclick="runAllTests()">Run All Tests</button>
+  <button onclick="clearResults()">Clear Results</button>
+  <div id="results"></div>
+
+  <script type="module">
+    import StorageService from '../js/storageService.js';
+
+    let testResults = [];
+
+    function addResult(testName, passed, message = '') {
+      testResults.push({ testName, passed, message });
+      displayResults();
+    }
+
+    function displayResults() {
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = testResults.map(result => 
+        `<div class="test ${result.passed ? 'pass' : 'fail'}">
+          <strong>${result.passed ? '✓' : '✗'} ${result.testName}</strong>
+          ${result.message ? `<br><small>${result.message}</small>` : ''}
+        </div>`
+      ).join('');
+    }
+
+    window.runAllTests = function() {
+      testResults = [];
+      localStorage.clear();
+      
+      const service = new StorageService('test-namespace');
+
+      // Test 1: Constructor with default namespace
+      const defaultService = new StorageService();
+      addResult('Constructor with default namespace', 
+        defaultService.namespace === 'productivity-dashboard',
+        `Expected: productivity-dashboard, Got: ${defaultService.namespace}`);
+
+      // Test 2: Constructor with custom namespace
+      addResult('Constructor with custom namespace', 
+        service.namespace === 'test-namespace',
+        `Expected: test-namespace, Got: ${service.namespace}`);
+
+      // Test 3: Storage availability check
+      addResult('Storage availability check', 
+        service.isAvailable === true,
+        `Expected: true, Got: ${service.isAvailable}`);
+
+      // Test 4: Save string data
+      const saveResult = service.save('test-key', 'test-value');
+      const savedValue = localStorage.getItem('test-namespace:test-key');
+      addResult('Save string data', 
+        saveResult && savedValue === '"test-value"',
+        `Saved: ${savedValue}`);
+
+      // Test 5: Save object data
+      const objData = { name: 'Task 1', completed: false };
+      service.save('task', objData);
+      const storedObj = JSON.parse(localStorage.getItem('test-namespace:task'));
+      addResult('Save object data', 
+        storedObj.name === 'Task 1' && storedObj.completed === false,
+        `Stored: ${JSON.stringify(storedObj)}`);
+
+      // Test 6: Load saved data
+      const loadedData = service.load('task');
+      addResult('Load saved data', 
+        loadedData.name === 'Task 1' && loadedData.completed === false,
+        `Loaded: ${JSON.stringify(loadedData)}`);
+
+      // Test 7: Load non-existent key
+      const nonExistent = service.load('non-existent-key');
+      addResult('Load non-existent key returns null', 
+        nonExistent === null,
+        `Expected: null, Got: ${nonExistent}`);
+
+      // Test 8: Namespaced keys
+      service.save('tasks', []);
+      const hasNamespace = localStorage.getItem('test-namespace:tasks') !== null;
+      const noDirectKey = localStorage.getItem('tasks') === null;
+      addResult('Uses namespaced keys', 
+        hasNamespace && noDirectKey,
+        `Namespaced key exists: ${hasNamespace}, Direct key exists: ${!noDirectKey}`);
+
+      // Test 9: Remove key
+      service.save('to-remove', 'value');
+      service.remove('to-remove');
+      const removed = localStorage.getItem('test-namespace:to-remove');
+      addResult('Remove key', 
+        removed === null,
+        `Expected: null, Got: ${removed}`);
+
+      // Test 10: Clear all namespaced keys
+      service.save('key1', 'value1');
+      service.save('key2', 'value2');
+      localStorage.setItem('other-namespace:key', 'value');
+      service.clear();
+      const key1Gone = localStorage.getItem('test-namespace:key1') === null;
+      const key2Gone = localStorage.getItem('test-namespace:key2') === null;
+      const otherRemains = localStorage.getItem('other-namespace:key') === 'value';
+      addResult('Clear only namespaced keys', 
+        key1Gone && key2Gone && otherRemains,
+        `Key1 gone: ${key1Gone}, Key2 gone: ${key2Gone}, Other remains: ${otherRemains}`);
+
+      // Test 11: Round-trip persistence
+      const originalData = {
+        id: 'task-123',
+        text: 'Complete project',
+        completed: false,
+        createdAt: 1234567890
+      };
+      service.save('round-trip', originalData);
+      const roundTripData = service.load('round-trip');
+      const matches = JSON.stringify(originalData) === JSON.stringify(roundTripData);
+      addResult('Round-trip persistence', 
+        matches,
+        `Original: ${JSON.stringify(originalData)}, Loaded: ${JSON.stringify(roundTripData)}`);
+
+      // Test 12: Handle corrupted data
+      localStorage.setItem('test-namespace:corrupted', '{invalid json}');
+      const corruptedResult = service.load('corrupted');
+      addResult('Handle corrupted data gracefully', 
+        corruptedResult === null,
+        `Expected: null, Got: ${corruptedResult}`);
+
+      // Test 13: Namespace isolation
+      const service1 = new StorageService('app1');
+      const service2 = new StorageService('app2');
+      service1.save('data', 'value1');
+      service2.save('data', 'value2');
+      const isolated = service1.load('data') === 'value1' && service2.load('data') === 'value2';
+      addResult('Namespace isolation', 
+        isolated,
+        `App1: ${service1.load('data')}, App2: ${service2.load('data')}`);
+
+      // Summary
+      const passed = testResults.filter(r => r.passed).length;
+      const total = testResults.length;
+      const summary = document.createElement('div');
+      summary.style.cssText = 'margin-top: 20px; padding: 15px; background: #e7f3ff; border-radius: 4px;';
+      summary.innerHTML = `<h2>Test Summary: ${passed}/${total} tests passed</h2>`;
+      document.getElementById('results').appendChild(summary);
+    };
+
+    window.clearResults = function() {
+      testResults = [];
+      document.getElementById('results').innerHTML = '';
+      localStorage.clear();
+    };
+  </script>
+</body>
+</html>

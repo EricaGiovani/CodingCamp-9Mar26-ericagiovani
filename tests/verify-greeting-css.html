@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greeting Display CSS Verification</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Greeting Display CSS Verification</h1>
+        </header>
+
+        <main class="dashboard-main">
+            <!-- Greeting Display Component -->
+            <section class="component greeting-component" id="greeting-display">
+                <!-- This will be populated by the JavaScript -->
+            </section>
+        </main>
+    </div>
+
+    <script type="module">
+        import { GreetingDisplay } from '../js/greetingDisplay.js';
+
+        // Initialize greeting display
+        const greetingContainer = document.getElementById('greeting-display');
+        const greetingDisplay = new GreetingDisplay(greetingContainer);
+        greetingDisplay.init();
+
+        console.log('Greeting display initialized successfully');
+        console.log('CSS Verification Points:');
+        console.log('1. Font size for greeting message should be 24px (--font-size-2xl)');
+        console.log('2. Font size for time display should be 32px (--font-size-3xl)');
+        console.log('3. Font size for date display should be 16px (--font-size-lg)');
+        console.log('4. All font sizes are ≥ 14px (Requirement 13.2)');
+        console.log('5. Visual separation with border-bottom (Requirement 13.3)');
+        console.log('6. Consistent color scheme using CSS variables (Requirement 13.1)');
+        console.log('7. Sufficient contrast ratios (Requirement 13.4)');
+    </script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify handleLinkClick - QuickLinks</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .test-section h3 {
+      margin-top: 0;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .result {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    .info {
+      color: blue;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>QuickLinks - handleLinkClick Verification</h1>
+  <p>This page tests the handleLinkClick method implementation.</p>
+
+  <div class="test-section">
+    <h3>Test 1: Basic Link Click</h3>
+    <p>Click the button to test opening a link in a new tab with security attributes.</p>
+    <button id="test1-btn">Open Example.com</button>
+    <div id="test1-result" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 2: HTTPS Link</h3>
+    <p>Test opening an HTTPS link.</p>
+    <button id="test2-btn">Open GitHub.com</button>
+    <div id="test2-result" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 3: Link with Query Parameters</h3>
+    <p>Test opening a link with query parameters.</p>
+    <button id="test3-btn">Open Google Search</button>
+    <div id="test3-result" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 4: Verify Security Attributes</h3>
+    <p>This test verifies that window.open is called with correct security attributes.</p>
+    <button id="test4-btn">Run Security Test</button>
+    <div id="test4-result" class="result"></div>
+  </div>
+
+  <script type="module">
+    import QuickLinks from '../js/quickLinks.js';
+    import StorageService from '../js/storageService.js';
+
+    // Create instances
+    const container = document.createElement('div');
+    const storageService = new StorageService('test-quicklinks');
+    const quickLinks = new QuickLinks(container, storageService);
+    quickLinks.init();
+
+    // Test 1: Basic link click
+    document.getElementById('test1-btn').addEventListener('click', () => {
+      const resultDiv = document.getElementById('test1-result');
+      try {
+        quickLinks.handleLinkClick('https://example.com');
+        resultDiv.innerHTML = '<span class="success">✓ Link opened successfully!</span><br>' +
+                             '<span class="info">Check if a new tab opened with example.com</span>';
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="error">✗ Error: ${error.message}</span>`;
+      }
+    });
+
+    // Test 2: HTTPS link
+    document.getElementById('test2-btn').addEventListener('click', () => {
+      const resultDiv = document.getElementById('test2-result');
+      try {
+        quickLinks.handleLinkClick('https://github.com');
+        resultDiv.innerHTML = '<span class="success">✓ Link opened successfully!</span><br>' +
+                             '<span class="info">Check if a new tab opened with github.com</span>';
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="error">✗ Error: ${error.message}</span>`;
+      }
+    });
+
+    // Test 3: Link with query parameters
+    document.getElementById('test3-btn').addEventListener('click', () => {
+      const resultDiv = document.getElementById('test3-result');
+      try {
+        quickLinks.handleLinkClick('https://www.google.com/search?q=javascript');
+        resultDiv.innerHTML = '<span class="success">✓ Link opened successfully!</span><br>' +
+                             '<span class="info">Check if a new tab opened with Google search</span>';
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="error">✗ Error: ${error.message}</span>`;
+      }
+    });
+
+    // Test 4: Verify security attributes
+    document.getElementById('test4-btn').addEventListener('click', () => {
+      const resultDiv = document.getElementById('test4-result');
+      
+      // Mock window.open to capture the call
+      const originalOpen = window.open;
+      let capturedArgs = null;
+      
+      window.open = function(...args) {
+        capturedArgs = args;
+        return {}; // Return a mock window object
+      };
+
+      try {
+        quickLinks.handleLinkClick('https://test.com');
+        
+        // Restore original window.open
+        window.open = originalOpen;
+
+        // Verify the call
+        if (capturedArgs) {
+          const [url, target, features] = capturedArgs;
+          
+          let results = [];
+          results.push(`<strong>URL:</strong> ${url}`);
+          results.push(`<strong>Target:</strong> ${target}`);
+          results.push(`<strong>Features:</strong> ${features}`);
+          
+          // Check security attributes
+          const hasNoopener = features.includes('noopener');
+          const hasNoreferrer = features.includes('noreferrer');
+          const correctTarget = target === '_blank';
+          
+          if (hasNoopener && hasNoreferrer && correctTarget) {
+            results.push('<span class="success">✓ All security attributes present!</span>');
+            results.push('<span class="info">• noopener: Prevents new page from accessing window.opener</span>');
+            results.push('<span class="info">• noreferrer: Prevents sending referrer header</span>');
+          } else {
+            results.push('<span class="error">✗ Missing security attributes!</span>');
+            if (!hasNoopener) results.push('<span class="error">• Missing: noopener</span>');
+            if (!hasNoreferrer) results.push('<span class="error">• Missing: noreferrer</span>');
+            if (!correctTarget) results.push('<span class="error">• Wrong target: ' + target + '</span>');
+          }
+          
+          resultDiv.innerHTML = results.join('<br>');
+        } else {
+          resultDiv.innerHTML = '<span class="error">✗ window.open was not called</span>';
+        }
+      } catch (error) {
+        window.open = originalOpen;
+        resultDiv.innerHTML = `<span class="error">✗ Error: ${error.message}</span>`;
+      }
+    });
+  </script>
+</body>
+</html>

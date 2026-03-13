@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Timer Verification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .test-section h3 {
+      margin-top: 0;
+    }
+    .pass {
+      color: green;
+      font-weight: bold;
+    }
+    .fail {
+      color: red;
+      font-weight: bold;
+    }
+    button {
+      margin: 5px;
+      padding: 8px 15px;
+      cursor: pointer;
+    }
+    #timer-display {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Focus Timer Verification</h1>
+  
+  <div class="test-section">
+    <h3>Test 1: Constructor Initialization</h3>
+    <div id="test1-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 2: Start/Stop/Reset Functionality</h3>
+    <div id="timer-display">25:00</div>
+    <button id="start-btn">Start</button>
+    <button id="stop-btn">Stop</button>
+    <button id="reset-btn">Reset</button>
+    <div id="test2-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 3: Timer State</h3>
+    <div id="test3-result"></div>
+  </div>
+
+  <script type="module">
+    // Import the FocusTimer class
+    class FocusTimer {
+      constructor(containerElement) {
+        if (!containerElement) {
+          throw new Error('Container element is required for FocusTimer');
+        }
+
+        this.containerElement = containerElement;
+        this.totalSeconds = 1500;
+        this.remainingSeconds = 1500;
+        this.isRunning = false;
+        this.intervalId = null;
+      }
+
+      start() {
+        if (this.isRunning) {
+          return;
+        }
+
+        this.isRunning = true;
+
+        this.intervalId = setInterval(() => {
+          if (this.remainingSeconds > 0) {
+            this.remainingSeconds--;
+            this.updateDisplay();
+          } else {
+            this.stop();
+          }
+        }, 1000);
+      }
+
+      stop() {
+        if (!this.isRunning) {
+          return;
+        }
+
+        this.isRunning = false;
+
+        if (this.intervalId !== null) {
+          clearInterval(this.intervalId);
+          this.intervalId = null;
+        }
+      }
+
+      reset() {
+        if (this.isRunning) {
+          this.stop();
+        }
+
+        this.remainingSeconds = this.totalSeconds;
+        this.updateDisplay();
+      }
+
+      updateDisplay() {
+        const minutes = Math.floor(this.remainingSeconds / 60);
+        const seconds = this.remainingSeconds % 60;
+        const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        document.getElementById('timer-display').textContent = display;
+        
+        // Update state display
+        document.getElementById('test3-result').innerHTML = `
+          <p>Total Seconds: ${this.totalSeconds}</p>
+          <p>Remaining Seconds: ${this.remainingSeconds}</p>
+          <p>Is Running: ${this.isRunning}</p>
+          <p>Interval ID: ${this.intervalId !== null ? 'Active' : 'Null'}</p>
+        `;
+      }
+
+      destroy() {
+        if (this.intervalId !== null) {
+          clearInterval(this.intervalId);
+          this.intervalId = null;
+        }
+        this.isRunning = false;
+      }
+    }
+
+    // Test 1: Constructor Initialization
+    const container = document.createElement('div');
+    const timer = new FocusTimer(container);
+    
+    let test1Pass = true;
+    let test1Messages = [];
+
+    if (timer.totalSeconds === 1500) {
+      test1Messages.push('<span class="pass">✓ totalSeconds initialized to 1500</span>');
+    } else {
+      test1Messages.push('<span class="fail">✗ totalSeconds not 1500</span>');
+      test1Pass = false;
+    }
+
+    if (timer.remainingSeconds === 1500) {
+      test1Messages.push('<span class="pass">✓ remainingSeconds initialized to 1500</span>');
+    } else {
+      test1Messages.push('<span class="fail">✗ remainingSeconds not 1500</span>');
+      test1Pass = false;
+    }
+
+    if (timer.isRunning === false) {
+      test1Messages.push('<span class="pass">✓ isRunning initialized to false</span>');
+    } else {
+      test1Messages.push('<span class="fail">✗ isRunning not false</span>');
+      test1Pass = false;
+    }
+
+    if (timer.intervalId === null) {
+      test1Messages.push('<span class="pass">✓ intervalId initialized to null</span>');
+    } else {
+      test1Messages.push('<span class="fail">✗ intervalId not null</span>');
+      test1Pass = false;
+    }
+
+    document.getElementById('test1-result').innerHTML = test1Messages.join('<br>');
+
+    // Test 2: Interactive timer
+    const displayTimer = new FocusTimer(document.getElementById('timer-display'));
+    displayTimer.updateDisplay();
+
+    document.getElementById('start-btn').addEventListener('click', () => {
+      displayTimer.start();
+      document.getElementById('test2-result').innerHTML = '<span class="pass">Timer started</span>';
+    });
+
+    document.getElementById('stop-btn').addEventListener('click', () => {
+      displayTimer.stop();
+      document.getElementById('test2-result').innerHTML = '<span class="pass">Timer stopped at ' + displayTimer.remainingSeconds + ' seconds</span>';
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      displayTimer.reset();
+      document.getElementById('test2-result').innerHTML = '<span class="pass">Timer reset to 1500 seconds</span>';
+    });
+
+    // Test 3: Initial state display
+    displayTimer.updateDisplay();
+  </script>
+</body>
+</html>

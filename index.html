@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Productivity Dashboard - Manage your time and tasks efficiently">
+    <title>Productivity Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Productivity Dashboard</h1>
+        </header>
+
+        <main class="dashboard-main">
+            <!-- Greeting Display Component -->
+            <section class="component greeting-component" id="greeting-display">
+                <div class="greeting-content">
+                    <!-- Greeting, time, and date will be dynamically inserted here -->
+                </div>
+            </section>
+
+            <!-- Focus Timer Component -->
+            <section class="component timer-component" id="focus-timer">
+                <h2>Focus Timer</h2>
+                <div class="timer-settings">
+                    <label for="timer-duration">Duration (minutes):</label>
+                    <input 
+                        type="number" 
+                        id="timer-duration" 
+                        min="1" 
+                        max="120" 
+                        value="25"
+                        aria-label="Timer duration in minutes"
+                    >
+                    <button class="btn-set-duration" aria-label="Set timer duration">Set</button>
+                </div>
+                <div class="timer-content">
+                    <!-- Timer display and controls will be dynamically inserted here -->
+                </div>
+            </section>
+
+            <!-- Task List Component -->
+            <section class="component task-component" id="task-list">
+                <h2>Task List</h2>
+                <div class="task-input-container">
+                    <form class="task-form" id="task-form">
+                        <input 
+                            type="text" 
+                            id="task-input" 
+                            class="task-input" 
+                            placeholder="Add a new task..." 
+                            maxlength="500"
+                            aria-label="New task text"
+                        >
+                        <button 
+                            type="submit" 
+                            class="btn-add-task"
+                            aria-label="Add task"
+                        >
+                            Add Task
+                        </button>
+                    </form>
+                    <button 
+                        id="btn-sort-tasks" 
+                        class="btn-sort-tasks"
+                        aria-label="Sort tasks alphabetically"
+                    >
+                        Sort A-Z
+                    </button>
+                </div>
+                <div class="task-list-container">
+                    <!-- Task items will be dynamically inserted here -->
+                </div>
+            </section>
+
+            <!-- Quick Links Component -->
+            <section class="component links-component" id="quick-links">
+                <h2>Quick Links</h2>
+                <div class="links-input-container">
+                    <form class="links-form" id="links-form">
+                        <input 
+                            type="url" 
+                            id="link-url-input" 
+                            class="link-url-input" 
+                            placeholder="Enter URL (e.g., https://example.com)" 
+                            aria-label="Link URL"
+                            required
+                        >
+                        <input 
+                            type="text" 
+                            id="link-title-input" 
+                            class="link-title-input" 
+                            placeholder="Enter title" 
+                            maxlength="100"
+                            aria-label="Link title"
+                            required
+                        >
+                        <button 
+                            type="submit" 
+                            class="btn-add-link"
+                            aria-label="Add link"
+                        >
+                            Add Link
+                        </button>
+                    </form>
+                </div>
+                <div class="links-list-container">
+                    <!-- Link buttons will be dynamically inserted here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

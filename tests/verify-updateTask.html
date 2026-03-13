@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify updateTask Functionality</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .test-result {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .pass {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .fail {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    h1 {
+      color: #333;
+    }
+    h2 {
+      color: #666;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Task Update Functionality Verification</h1>
+  <div id="results"></div>
+
+  <script type="module">
+    import TaskList from '../js/taskList.js';
+    import StorageService from '../js/storageService.js';
+
+    const results = document.getElementById('results');
+
+    function addResult(testName, passed, message = '') {
+      const div = document.createElement('div');
+      div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+      div.innerHTML = `<strong>${passed ? '✓' : '✗'} ${testName}</strong>${message ? '<br>' + message : ''}`;
+      results.appendChild(div);
+    }
+
+    // Initialize components
+    const container = document.createElement('div');
+    const storageService = new StorageService('test-update-task');
+    storageService.clear(); // Clear any previous test data
+    const taskList = new TaskList(container, storageService);
+    taskList.init();
+
+    // Test 1: Update existing task
+    taskList.addTask('Original task text');
+    const taskId = taskList.tasks[0].id;
+    const result1 = taskList.updateTask(taskId, 'Updated task text');
+    addResult(
+      'Update existing task',
+      result1 === true && taskList.tasks[0].text === 'Updated task text',
+      `Expected text: "Updated task text", Got: "${taskList.tasks[0].text}"`
+    );
+
+    // Test 2: Trim whitespace
+    const result2 = taskList.updateTask(taskId, '  Trimmed text  ');
+    addResult(
+      'Trim whitespace from new text',
+      taskList.tasks[0].text === 'Trimmed text',
+      `Expected: "Trimmed text", Got: "${taskList.tasks[0].text}"`
+    );
+
+    // Test 3: Reject empty string
+    const beforeText = taskList.tasks[0].text;
+    const result3 = taskList.updateTask(taskId, '');
+    addResult(
+      'Reject empty string',
+      result3 === false && taskList.tasks[0].text === beforeText,
+      `Text should remain unchanged: "${taskList.tasks[0].text}"`
+    );
+
+    // Test 4: Reject whitespace-only string
+    const result4 = taskList.updateTask(taskId, '   ');
+    addResult(
+      'Reject whitespace-only string',
+      result4 === false && taskList.tasks[0].text === beforeText,
+      `Text should remain unchanged: "${taskList.tasks[0].text}"`
+    );
+
+    // Test 5: Return false for non-existent task ID
+    const result5 = taskList.updateTask('non-existent-id', 'New text');
+    addResult(
+      'Return false for non-existent task ID',
+      result5 === false,
+      `Expected: false, Got: ${result5}`
+    );
+
+    // Test 6: Preserve task ID
+    const originalId = taskList.tasks[0].id;
+    taskList.updateTask(taskId, 'Another update');
+    addResult(
+      'Preserve task ID',
+      taskList.tasks[0].id === originalId,
+      `ID should remain: "${originalId}"`
+    );
+
+    // Test 7: Preserve completed status
+    taskList.tasks[0].completed = true;
+    taskList.updateTask(taskId, 'Update with completed true');
+    addResult(
+      'Preserve completed status',
+      taskList.tasks[0].completed === true,
+      `Completed should remain true`
+    );
+
+    // Test 8: Preserve createdAt timestamp
+    const originalCreatedAt = taskList.tasks[0].createdAt;
+    taskList.updateTask(taskId, 'Final update');
+    addResult(
+      'Preserve createdAt timestamp',
+      taskList.tasks[0].createdAt === originalCreatedAt,
+      `Timestamp should remain: ${originalCreatedAt}`
+    );
+
+    // Test 9: Update correct task in list with multiple tasks
+    taskList.addTask('Second task');
+    taskList.addTask('Third task');
+    const secondTaskId = taskList.tasks[1].id;
+    taskList.updateTask(secondTaskId, 'Updated second task');
+    addResult(
+      'Update correct task in list',
+      taskList.tasks[1].text === 'Updated second task' &&
+      taskList.tasks[0].text === 'Final update' &&
+      taskList.tasks[2].text === 'Third task',
+      `Task 1: "${taskList.tasks[0].text}", Task 2: "${taskList.tasks[1].text}", Task 3: "${taskList.tasks[2].text}"`
+    );
+
+    // Test 10: Persistence to storage
+    const loadedTasks = storageService.load('tasks');
+    addResult(
+      'Persist to storage',
+      loadedTasks && loadedTasks.length === 3 && loadedTasks[1].text === 'Updated second task',
+      `Storage contains ${loadedTasks ? loadedTasks.length : 0} tasks`
+    );
+
+    // Clean up
+    storageService.clear();
+  </script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Links Render Test</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .test-result {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        .pass { background-color: #d4edda; color: #155724; }
+        .fail { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Quick Links Render Method Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Empty State</h2>
+        <div id="test1-container" class="links-component">
+            <div class="links-list-container"></div>
+        </div>
+        <div id="test1-result" class="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Render Links with Buttons</h2>
+        <div id="test2-container" class="links-component">
+            <div class="links-list-container"></div>
+        </div>
+        <div id="test2-result" class="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: XSS Prevention (HTML Sanitization)</h2>
+        <div id="test3-container" class="links-component">
+            <div class="links-list-container"></div>
+        </div>
+        <div id="test3-result" class="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Delete Button Functionality</h2>
+        <div id="test4-container" class="links-component">
+            <div class="links-list-container"></div>
+        </div>
+        <div id="test4-result" class="test-result"></div>
+    </div>
+
+    <script type="module">
+        import StorageService from '../js/storageService.js';
+        import QuickLinks from '../js/quickLinks.js';
+
+        // Test 1: Empty State
+        function test1() {
+            const container = document.getElementById('test1-container');
+            const resultDiv = document.getElementById('test1-result');
+            const storage = new StorageService('test-empty');
+            const quickLinks = new QuickLinks(container, storage);
+            
+            quickLinks.init();
+            quickLinks.render();
+            
+            const emptyState = container.querySelector('.empty-state');
+            if (emptyState && emptyState.textContent.includes('No quick links yet')) {
+                resultDiv.className = 'test-result pass';
+                resultDiv.textContent = '✓ PASS: Empty state message displayed correctly';
+            } else {
+                resultDiv.className = 'test-result fail';
+                resultDiv.textContent = '✗ FAIL: Empty state not displayed';
+            }
+        }
+
+        // Test 2: Render Links with Buttons
+        function test2() {
+            const container = document.getElementById('test2-container');
+            const resultDiv = document.getElementById('test2-result');
+            const storage = new StorageService('test-render');
+            const quickLinks = new QuickLinks(container, storage);
+            
+            quickLinks.init();
+            quickLinks.addLink('https://example.com', 'Example Site');
+            quickLinks.addLink('https://github.com', 'GitHub');
+            
+            const linkButtons = container.querySelectorAll('.link-button');
+            const deleteButtons = container.querySelectorAll('.btn-delete-link');
+            
+            if (linkButtons.length === 2 && deleteButtons.length === 2) {
+                const hasCorrectText = linkButtons[0].textContent.trim() === 'Example Site' &&
+                                      linkButtons[1].textContent.trim() === 'GitHub';
+                if (hasCorrectText) {
+                    resultDiv.className = 'test-result pass';
+                    resultDiv.textContent = '✓ PASS: Links rendered with correct buttons and text';
+                } else {
+                    resultDiv.className = 'test-result fail';
+                    resultDiv.textContent = '✗ FAIL: Link text incorrect';
+                }
+            } else {
+                resultDiv.className = 'test-result fail';
+                resultDiv.textContent = `✗ FAIL: Expected 2 link buttons and 2 delete buttons, got ${linkButtons.length} and ${deleteButtons.length}`;
+            }
+            
+            storage.clear();
+        }
+
+        // Test 3: XSS Prevention
+        function test3() {
+            const container = document.getElementById('test3-container');
+            const resultDiv = document.getElementById('test3-result');
+            const storage = new StorageService('test-xss');
+            const quickLinks = new QuickLinks(container, storage);
+            
+            quickLinks.init();
+            quickLinks.addLink('https://example.com', '<script>alert("XSS")</script>');
+            
+            const linkButton = container.querySelector('.link-button');
+            const innerHTML = container.innerHTML;
+            
+            // Check that script tags are escaped
+            const hasScriptTag = innerHTML.includes('<script>');
+            const hasEscapedContent = linkButton.textContent.includes('<script>');
+            
+            if (!hasScriptTag && hasEscapedContent) {
+                resultDiv.className = 'test-result pass';
+                resultDiv.textContent = '✓ PASS: HTML properly sanitized, XSS prevented';
+            } else {
+                resultDiv.className = 'test-result fail';
+                resultDiv.textContent = '✗ FAIL: XSS vulnerability detected';
+            }
+            
+            storage.clear();
+        }
+
+        // Test 4: Delete Button Functionality
+        function test4() {
+            const container = document.getElementById('test4-container');
+            const resultDiv = document.getElementById('test4-result');
+            const storage = new StorageService('test-delete');
+            const quickLinks = new QuickLinks(container, storage);
+            
+            quickLinks.init();
+            quickLinks.addLink('https://example.com', 'Test Link');
+            
+            let linkButtons = container.querySelectorAll('.link-button');
+            const initialCount = linkButtons.length;
+            
+            // Click the delete button
+            const deleteButton = container.querySelector('.btn-delete-link');
+            deleteButton.click();
+            
+            linkButtons = container.querySelectorAll('.link-button');
+            const finalCount = linkButtons.length;
+            
+            if (initialCount === 1 && finalCount === 0) {
+                resultDiv.className = 'test-result pass';
+                resultDiv.textContent = '✓ PASS: Delete button removes link correctly';
+            } else {
+                resultDiv.className = 'test-result fail';
+                resultDiv.textContent = `✗ FAIL: Delete didn't work (initial: ${initialCount}, final: ${finalCount})`;
+            }
+            
+            storage.clear();
+        }
+
+        // Run all tests
+        test1();
+        test2();
+        test3();
+        test4();
+    </script>
+</body>
+</html>

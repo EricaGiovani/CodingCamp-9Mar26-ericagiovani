@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify deleteLink - Task 6.3</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .test-section h3 {
+      margin-top: 0;
+    }
+    .pass {
+      color: green;
+      font-weight: bold;
+    }
+    .fail {
+      color: red;
+      font-weight: bold;
+    }
+    button {
+      margin: 5px;
+      padding: 8px 15px;
+      cursor: pointer;
+    }
+    #links-display {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f5f5f5;
+      border-radius: 3px;
+    }
+    .link-item {
+      padding: 5px;
+      margin: 5px 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Task 6.3: Verify deleteLink Method</h1>
+  
+  <div class="test-section">
+    <h3>Test 1: Delete Single Link</h3>
+    <button id="test1-btn">Run Test 1</button>
+    <div id="test1-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 2: Delete Link from Multiple Links</h3>
+    <button id="test2-btn">Run Test 2</button>
+    <div id="test2-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 3: Delete Non-Existent Link</h3>
+    <button id="test3-btn">Run Test 3</button>
+    <div id="test3-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 4: Storage Persistence</h3>
+    <button id="test4-btn">Run Test 4</button>
+    <div id="test4-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Interactive Test: Add and Delete Links</h3>
+    <div>
+      <input type="text" id="url-input" placeholder="URL" value="https://example.com">
+      <input type="text" id="title-input" placeholder="Title" value="Example Site">
+      <button id="add-btn">Add Link</button>
+    </div>
+    <div id="links-display"></div>
+  </div>
+
+  <script type="module">
+    import QuickLinks from '../js/quickLinks.js';
+    import StorageService from '../js/storageService.js';
+
+    // Test 1: Delete Single Link
+    document.getElementById('test1-btn').addEventListener('click', () => {
+      const resultDiv = document.getElementById('test1-result');
+      
+      try {
+        // Create mock storage
+        const storage = new StorageService('test-delete-1');
+        storage.clear();
+        
+        const container = document.createElement('div');
+        const quickLinks = new QuickLinks(container, storage);
+        quickLinks.init();
+        
+        // Add a link
+        quickLinks.addLink('https://example.com', 'Example');
+        const linkId = quickLinks.links[0].id;
+        
+        // Verify link was added
+        if (quickLinks.links.length !== 1) {
+          throw new Error('Link was not added');
+        }
+        
+        // Delete the link
+        const result = quickLinks.deleteLink(linkId);
+        
+        // Verify deletion
+        if (!result) {
+          throw new Error('deleteLink returned false');
+        }
+        
+        if (quickLinks.links.length !== 0) {
+          throw new Error(`Expected 0 links, got ${quickLinks.links.length}`);
+        }
+        
+        // Verify storage was updated
+        const savedLinks = storage.load('links');
+        if (savedLinks.length !== 0) {
+          throw new Error('Storage was not updated');
+        }
+        
+        resultDiv.innerHTML = '<span class="pass">✓ PASS</span> - Link deleted successfully';
+        storage.clear();
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="fail">✗ FAIL</span> - ${error.message}`;
+      }
+    });
+
+    // Test 2: Delete Link from Multiple Links
+    document.getElementById('test2-btn').addEventListener('click', () => {
+      const resultDiv = document.getElementById('test2-result');
+      
+      try {
+        const storage = new StorageService('test-delete-2');
+        storage.clear();
+        
+        const container = document.createElement('div');
+        const quickLinks = new QuickLinks(container, storage);
+        quickLinks.init();
+        
+        // Add multiple links
+        quickLinks.addLink('https://example1.com', 'Example 1');
+        quickLinks.addLink('https://example2.com', 'Example 2');
+        quickLinks.addLink('https://example3.com', 'Example 3');
+        
+        const linkToDelete = quickLinks.links[1];
+        const linkId = linkToDelete.id;
+        
+        // Delete the middle link
+        const result = quickLinks.deleteLink(linkId);
+        
+        // Verify deletion
+        if (!result) {
+          throw new Error('deleteLink returned false');
+        }
+        
+        if (quickLinks.links.length !== 2) {
+          throw new Error(`Expected 2 links, got ${quickLinks.links.length}`);
+        }
+        
+        // Verify correct link was deleted
+        const deletedLink = quickLinks.links.find(link => link.id === linkId);
+        if (deletedLink) {
+          throw new Error('Deleted link still exists in array');
+        }
+        
+        // Verify remaining links are correct
+        if (quickLinks.links[0].title !== 'Example 1' || quickLinks.links[1].title !== 'Example 3') {
+          throw new Error('Wrong links remain after deletion');
+        }
+        
+        resultDiv.innerHTML = '<span class="pass">✓ PASS</span> - Correct link deleted from multiple links';
+        storage.clear();
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="fail">✗ FAIL</span> - ${error.message}`;
+      }
+    });
+
+    // Test 3: Delete Non-Existent Link
+    document.getElementById('test3-btn').addEventListener('click', () => {
+      const resultDiv = document.getElementById('test3-result');
+      
+      try {
+        const storage = new StorageService('test-delete-3');
+        storage.clear();
+        
+        const container = document.createElement('div');
+        const quickLinks = new QuickLinks(container, storage);
+        quickLinks.init();
+        
+        // Add a link
+        quickLinks.addLink('https://example.com', 'Example');
+        
+        // Try to delete non-existent link
+        const result = quickLinks.deleteLink('non-existent-id');
+        
+        // Verify deletion failed
+        if (result !== false) {
+          throw new Error('deleteLink should return false for non-existent link');
+        }
+        
+        // Verify link still exists
+        if (quickLinks.links.length !== 1) {
+          throw new Error('Link was incorrectly deleted');
+        }
+        
+        resultDiv.innerHTML = '<span class="pass">✓ PASS</span> - Non-existent link deletion handled correctly';
+        storage.clear();
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="fail">✗ FAIL</span> - ${error.message}`;
+      }
+    });
+
+    // Test 4: Storage Persistence
+    document.getElementById('test4-btn').addEventListener('click', () => {
+      const resultDiv = document.getElementById('test4-result');
+      
+      try {
+        const storage = new StorageService('test-delete-4');
+        storage.clear();
+        
+        const container = document.createElement('div');
+        const quickLinks = new QuickLinks(container, storage);
+        quickLinks.init();
+        
+        // Add links
+        quickLinks.addLink('https://example1.com', 'Example 1');
+        quickLinks.addLink('https://example2.com', 'Example 2');
+        
+        const linkId = quickLinks.links[0].id;
+        
+        // Delete a link
+        quickLinks.deleteLink(linkId);
+        
+        // Create new instance and load from storage
+        const quickLinks2 = new QuickLinks(container, storage);
+        quickLinks2.init();
+        
+        // Verify only one link remains
+        if (quickLinks2.links.length !== 1) {
+          throw new Error(`Expected 1 link after reload, got ${quickLinks2.links.length}`);
+        }
+        
+        if (quickLinks2.links[0].title !== 'Example 2') {
+          throw new Error('Wrong link persisted');
+        }
+        
+        resultDiv.innerHTML = '<span class="pass">✓ PASS</span> - Deletion persisted to storage correctly';
+        storage.clear();
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="fail">✗ FAIL</span> - ${error.message}`;
+      }
+    });
+
+    // Interactive Test
+    const storage = new StorageService('test-interactive');
+    storage.clear();
+    const container = document.getElementById('links-display');
+    const quickLinks = new QuickLinks(container, storage);
+    quickLinks.init();
+
+    // Add render method for display
+    quickLinks.render = function() {
+      container.innerHTML = '';
+      
+      if (this.links.length === 0) {
+        container.innerHTML = '<p>No links yet. Add one above!</p>';
+        return;
+      }
+      
+      this.links.forEach(link => {
+        const linkDiv = document.createElement('div');
+        linkDiv.className = 'link-item';
+        linkDiv.innerHTML = `
+          <strong>${link.title}</strong> - ${link.url}
+          <button onclick="deleteInteractiveLink('${link.id}')">Delete</button>
+        `;
+        container.appendChild(linkDiv);
+      });
+    };
+
+    // Make delete function global for onclick
+    window.deleteInteractiveLink = function(linkId) {
+      quickLinks.deleteLink(linkId);
+    };
+
+    document.getElementById('add-btn').addEventListener('click', () => {
+      const url = document.getElementById('url-input').value;
+      const title = document.getElementById('title-input').value;
+      
+      if (quickLinks.addLink(url, title)) {
+        document.getElementById('url-input').value = '';
+        document.getElementById('title-input').value = '';
+      } else {
+        alert('Failed to add link. Check URL and title.');
+      }
+    });
+
+    // Initial render
+    quickLinks.render();
+  </script>
+</body>
+</html>

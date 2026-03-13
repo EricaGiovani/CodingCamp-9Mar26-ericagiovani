@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Custom Name Feature</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body {
+            padding: 20px;
+        }
+        .test-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .test-info h2 {
+            margin-bottom: 10px;
+            color: #1976d2;
+        }
+        .test-info ul {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h2>Custom Name Feature Test</h2>
+        <p>This page tests the custom name feature in the greeting display.</p>
+        <ul>
+            <li>Enter your name in the input field</li>
+            <li>Click "Save" or press Enter</li>
+            <li>The greeting should update to include your name (e.g., "Good Morning, John")</li>
+            <li>Refresh the page - your name should persist</li>
+            <li>Clear the input and save to remove your name</li>
+        </ul>
+    </div>
+
+    <div class="component greeting-component" id="greeting-display">
+        <div class="greeting-content">
+            <!-- Greeting will be rendered here -->
+        </div>
+    </div>
+
+    <script type="module">
+        import StorageService from '../js/storageService.js';
+        import { GreetingDisplay } from '../js/greetingDisplay.js';
+
+        // Initialize storage service
+        const storageService = new StorageService('productivity-dashboard-test');
+
+        // Initialize greeting display
+        const container = document.querySelector('#greeting-display .greeting-content');
+        const greetingDisplay = new GreetingDisplay(container, storageService);
+        greetingDisplay.init();
+
+        console.log('Custom name feature test initialized');
+    </script>
+</body>
+</html>

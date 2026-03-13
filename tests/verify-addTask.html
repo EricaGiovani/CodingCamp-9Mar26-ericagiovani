@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify addTask Implementation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .test-result {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .pass {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .fail {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    h2 {
+      color: #333;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Task 5.2: addTask() Method Verification</h1>
+  <div id="results"></div>
+
+  <script type="module">
+    import TaskList from '../js/taskList.js';
+    import StorageService from '../js/storageService.js';
+
+    const results = document.getElementById('results');
+
+    function addResult(testName, passed, message = '') {
+      const div = document.createElement('div');
+      div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+      div.innerHTML = `<strong>${passed ? '✓' : '✗'} ${testName}</strong>${message ? '<br>' + message : ''}`;
+      results.appendChild(div);
+    }
+
+    // Create test instances
+    const container = document.createElement('div');
+    const storageService = new StorageService('test-dashboard');
+    const taskList = new TaskList(container, storageService);
+    
+    // Mock render method
+    taskList.render = () => console.log('Render called');
+
+    // Clear any existing test data
+    storageService.clear();
+    taskList.init();
+
+    // Test 1: Add valid task
+    const result1 = taskList.addTask('Buy groceries');
+    addResult('Add valid task', result1 && taskList.tasks.length === 1, 
+      `Expected: true and 1 task, Got: ${result1} and ${taskList.tasks.length} tasks`);
+
+    // Test 2: Trim whitespace
+    taskList.tasks = [];
+    taskList.addTask('  Task with spaces  ');
+    addResult('Trim whitespace', taskList.tasks[0]?.text === 'Task with spaces',
+      `Expected: "Task with spaces", Got: "${taskList.tasks[0]?.text}"`);
+
+    // Test 3: Reject empty string
+    taskList.tasks = [];
+    const result3 = taskList.addTask('');
+    addResult('Reject empty string', result3 === false && taskList.tasks.length === 0,
+      `Expected: false and 0 tasks, Got: ${result3} and ${taskList.tasks.length} tasks`);
+
+    // Test 4: Reject whitespace-only string
+    taskList.tasks = [];
+    const result4 = taskList.addTask('   ');
+    addResult('Reject whitespace-only string', result4 === false && taskList.tasks.length === 0,
+      `Expected: false and 0 tasks, Got: ${result4} and ${taskList.tasks.length} tasks`);
+
+    // Test 5: Reject string with tabs and newlines
+    taskList.tasks = [];
+    const result5 = taskList.addTask('\t\n\r  ');
+    addResult('Reject tabs and newlines', result5 === false && taskList.tasks.length === 0,
+      `Expected: false and 0 tasks, Got: ${result5} and ${taskList.tasks.length} tasks`);
+
+    // Test 6: Reject text exceeding 500 characters
+    taskList.tasks = [];
+    const longText = 'a'.repeat(501);
+    const result6 = taskList.addTask(longText);
+    addResult('Reject text > 500 chars', result6 === false && taskList.tasks.length === 0,
+      `Expected: false and 0 tasks, Got: ${result6} and ${taskList.tasks.length} tasks`);
+
+    // Test 7: Accept text with exactly 500 characters
+    taskList.tasks = [];
+    const maxText = 'a'.repeat(500);
+    const result7 = taskList.addTask(maxText);
+    addResult('Accept text = 500 chars', result7 === true && taskList.tasks.length === 1,
+      `Expected: true and 1 task, Got: ${result7} and ${taskList.tasks.length} tasks`);
+
+    // Test 8: Task has unique ID
+    taskList.tasks = [];
+    taskList.addTask('First task');
+    taskList.addTask('Second task');
+    const hasUniqueIds = taskList.tasks[0].id !== taskList.tasks[1].id;
+    const hasCorrectFormat = /^task-\d+-\d+$/.test(taskList.tasks[0].id);
+    addResult('Task has unique ID', hasUniqueIds && hasCorrectFormat,
+      `IDs: ${taskList.tasks[0].id}, ${taskList.tasks[1].id}`);
+
+    // Test 9: Task has completed = false
+    taskList.tasks = [];
+    taskList.addTask('New task');
+    addResult('Task completed = false', taskList.tasks[0].completed === false,
+      `Expected: false, Got: ${taskList.tasks[0].completed}`);
+
+    // Test 10: Task has createdAt timestamp
+    taskList.tasks = [];
+    const beforeTime = Date.now();
+    taskList.addTask('New task');
+    const afterTime = Date.now();
+    const hasValidTimestamp = taskList.tasks[0].createdAt >= beforeTime && 
+                              taskList.tasks[0].createdAt <= afterTime;
+    addResult('Task has createdAt timestamp', hasValidTimestamp,
+      `Timestamp: ${taskList.tasks[0].createdAt}`);
+
+    // Test 11: Maintains creation order
+    taskList.tasks = [];
+    taskList.addTask('First');
+    taskList.addTask('Second');
+    taskList.addTask('Third');
+    const correctOrder = taskList.tasks[0].text === 'First' &&
+                        taskList.tasks[1].text === 'Second' &&
+                        taskList.tasks[2].text === 'Third';
+    addResult('Maintains creation order', correctOrder,
+      `Order: ${taskList.tasks.map(t => t.text).join(', ')}`);
+
+    // Test 12: Persists to storage
+    taskList.tasks = [];
+    taskList.addTask('Persisted task');
+    const loaded = storageService.load('tasks');
+    addResult('Persists to storage', loaded && loaded.length === 1 && loaded[0].text === 'Persisted task',
+      `Loaded: ${JSON.stringify(loaded)}`);
+
+    // Clean up
+    storageService.clear();
+  </script>
+</body>
+</html>

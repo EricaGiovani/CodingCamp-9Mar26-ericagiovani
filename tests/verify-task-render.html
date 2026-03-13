@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task List Render Verification</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #4a90e2;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.pass {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.fail {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>Task List Render Verification</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Empty List State</h2>
+        <div id="test1-container" class="task-list-container"></div>
+        <div id="test1-status" class="status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Single Task</h2>
+        <div id="test2-container" class="task-list-container"></div>
+        <div id="test2-status" class="status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Multiple Tasks (Creation Order)</h2>
+        <div id="test3-container" class="task-list-container"></div>
+        <div id="test3-status" class="status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Completed Task Visual Indication</h2>
+        <div id="test4-container" class="task-list-container"></div>
+        <div id="test4-status" class="status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 5: XSS Prevention (HTML Sanitization)</h2>
+        <div id="test5-container" class="task-list-container"></div>
+        <div id="test5-status" class="status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 6: Interactive Test - Add, Edit, Delete, Toggle</h2>
+        <div class="task-input-container" style="margin-bottom: 16px;">
+            <input type="text" id="task-input" placeholder="Enter a task..." style="width: 70%; margin-right: 8px;">
+            <button id="add-task-btn" class="btn-start">Add Task</button>
+        </div>
+        <div id="test6-container" class="task-list-container"></div>
+        <div id="test6-status" class="status"></div>
+    </div>
+
+    <script type="module">
+        import TaskList from '../js/taskList.js';
+
+        // Mock storage service
+        const mockStorage = {
+            data: {},
+            save(key, value) {
+                this.data[key] = JSON.parse(JSON.stringify(value));
+            },
+            load(key) {
+                return this.data[key] ? JSON.parse(JSON.stringify(this.data[key])) : null;
+            },
+            remove(key) {
+                delete this.data[key];
+            }
+        };
+
+        // Test 1: Empty List State
+        function test1() {
+            const container = document.getElementById('test1-container');
+            const status = document.getElementById('test1-status');
+            const taskList = new TaskList(container, mockStorage);
+            taskList.init();
+            taskList.render();
+
+            const hasEmptyState = container.innerHTML.includes('No tasks yet');
+            if (hasEmptyState) {
+                status.textContent = '✓ PASS: Empty state message displayed';
+                status.className = 'status pass';
+            } else {
+                status.textContent = '✗ FAIL: Empty state message not found';
+                status.className = 'status fail';
+            }
+        }
+
+        // Test 2: Single Task
+        function test2() {
+            const container = document.getElementById('test2-container');
+            const status = document.getElementById('test2-status');
+            const taskList = new TaskList(container, mockStorage);
+            taskList.init();
+            taskList.addTask('Buy groceries');
+
+            const hasTaskItem = container.querySelector('.task-item');
+            const hasCheckbox = container.querySelector('.task-checkbox');
+            const hasEditBtn = container.querySelector('.btn-edit');
+            const hasDeleteBtn = container.querySelector('.btn-delete');
+            const taskText = container.querySelector('.task-text');
+
+            if (hasTaskItem && hasCheckbox && hasEditBtn && hasDeleteBtn && 
+                taskText && taskText.textContent === 'Buy groceries') {
+                status.textContent = '✓ PASS: Task rendered with all elements';
+                status.className = 'status pass';
+            } else {
+                status.textContent = '✗ FAIL: Task missing required elements';
+                status.className = 'status fail';
+            }
+        }
+
+        // Test 3: Multiple Tasks (Creation Order)
+        function test3() {
+            const container = document.getElementById('test3-container');
+            const status = document.getElementById('test3-status');
+            const taskList = new TaskList(container, mockStorage);
+            taskList.init();
+            
+            // Add tasks with delays to ensure different timestamps
+            taskList.tasks = [
+                { id: 'task-1', text: 'First task', completed: false, createdAt: 1000 },
+                { id: 'task-2', text: 'Second task', completed: false, createdAt: 2000 },
+                { id: 'task-3', text: 'Third task', completed: false, createdAt: 3000 }
+            ];
+            taskList.render();
+
+            const taskItems = container.querySelectorAll('.task-item');
+            const texts = Array.from(taskItems).map(item => 
+                item.querySelector('.task-text').textContent
+            );
+
+            if (texts[0] === 'First task' && texts[1] === 'Second task' && texts[2] === 'Third task') {
+                status.textContent = '✓ PASS: Tasks displayed in creation order';
+                status.className = 'status pass';
+            } else {
+                status.textContent = `✗ FAIL: Wrong order: ${texts.join(', ')}`;
+                status.className = 'status fail';
+            }
+        }
+
+        // Test 4: Completed Task Visual Indication
+        function test4() {
+            const container = document.getElementById('test4-container');
+            const status = document.getElementById('test4-status');
+            const taskList = new TaskList(container, mockStorage);
+            taskList.init();
+            
+            taskList.tasks = [
+                { id: 'task-1', text: 'Incomplete task', completed: false, createdAt: 1000 },
+                { id: 'task-2', text: 'Completed task', completed: true, createdAt: 2000 }
+            ];
+            taskList.render();
+
+            const taskItems = container.querySelectorAll('.task-item');
+            const incompleteItem = taskItems[0];
+            const completedItem = taskItems[1];
+
+            const hasCompletedClass = completedItem.classList.contains('completed');
+            const checkboxChecked = completedItem.querySelector('.task-checkbox').checked;
+            const hasStrikethrough = window.getComputedStyle(
+                completedItem.querySelector('.task-text')
+            ).textDecoration.includes('line-through');
+
+            if (hasCompletedClass && checkboxChecked) {
+                status.textContent = '✓ PASS: Completed task has visual indication';
+                status.className = 'status pass';
+            } else {
+                status.textContent = '✗ FAIL: Completed task missing visual indication';
+                status.className = 'status fail';
+            }
+        }
+
+        // Test 5: XSS Prevention
+        function test5() {
+            const container = document.getElementById('test5-container');
+            const status = document.getElementById('test5-status');
+            const taskList = new TaskList(container, mockStorage);
+            taskList.init();
+            
+            const xssAttempt = '<script>alert("XSS")</script><img src=x onerror="alert(1)">';
+            taskList.addTask(xssAttempt);
+
+            const taskText = container.querySelector('.task-text');
+            const innerHTML = taskText.innerHTML;
+            
+            // Check that HTML tags are escaped
+            const isEscaped = innerHTML.includes('&lt;script&gt;') || 
+                             innerHTML.includes('&lt;img') ||
+                             !innerHTML.includes('<script>');
+
+            if (isEscaped) {
+                status.textContent = '✓ PASS: HTML is sanitized (XSS prevented)';
+                status.className = 'status pass';
+            } else {
+                status.textContent = '✗ FAIL: HTML not sanitized (XSS vulnerability!)';
+                status.className = 'status fail';
+            }
+        }
+
+        // Test 6: Interactive Test
+        function test6() {
+            const container = document.getElementById('test6-container');
+            const status = document.getElementById('test6-status');
+            const input = document.getElementById('task-input');
+            const addBtn = document.getElementById('add-task-btn');
+            
+            const taskList = new TaskList(container, mockStorage);
+            taskList.init();
+
+            addBtn.addEventListener('click', () => {
+                const text = input.value.trim();
+                if (text) {
+                    taskList.addTask(text);
+                    input.value = '';
+                    status.textContent = '✓ Task added! Try editing, toggling, and deleting tasks.';
+                    status.className = 'status pass';
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    addBtn.click();
+                }
+            });
+
+            status.textContent = 'Add tasks above to test interactivity';
+            status.className = 'status';
+        }
+
+        // Run all tests
+        test1();
+        test2();
+        test3();
+        test4();
+        test5();
+        test6();
+    </script>
+</body>
+</html>

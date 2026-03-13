@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Test - Productivity Dashboard</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        .test-results {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: white;
+            border: 2px solid #333;
+            padding: 20px;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .test-results h3 {
+            margin-top: 0;
+        }
+        .test-item {
+            margin: 10px 0;
+            padding: 8px;
+            border-left: 3px solid #ccc;
+        }
+        .test-item.pass {
+            border-left-color: #4caf50;
+            background: #e8f5e9;
+        }
+        .test-item.fail {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+        .test-item.pending {
+            border-left-color: #ff9800;
+            background: #fff3e0;
+        }
+        .metric {
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .test-controls {
+            margin: 15px 0;
+        }
+        .test-controls button {
+            margin: 5px;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Productivity Dashboard - Performance Test</h1>
+        </header>
+
+        <main class="dashboard-main">
+            <!-- Greeting Display Component -->
+            <section class="component greeting-component" id="greeting-display">
+                <div class="greeting-content">
+                    <!-- Greeting, time, and date will be dynamically inserted here -->
+                </div>
+            </section>
+
+            <!-- Focus Timer Component -->
+            <section class="component timer-component" id="focus-timer">
+                <h2>Focus Timer</h2>
+                <div class="timer-content">
+                    <!-- Timer display and controls will be dynamically inserted here -->
+                </div>
+            </section>
+
+            <!-- Task List Component -->
+            <section class="component task-component" id="task-list">
+                <h2>Task List</h2>
+                <div class="task-input-container">
+                    <form class="task-form" id="task-form">
+                        <input 
+                            type="text" 
+                            id="task-input" 
+                            class="task-input" 
+                            placeholder="Add a new task..." 
+                            maxlength="500"
+                            aria-label="New task text"
+                        >
+                        <button 
+                            type="submit" 
+                            class="btn-add-task"
+                            aria-label="Add task"
+                        >
+                            Add Task
+                        </button>
+                    </form>
+                </div>
+                <div class="task-list-container">
+                    <!-- Task items will be dynamically inserted here -->
+                </div>
+            </section>
+
+            <!-- Quick Links Component -->
+            <section class="component links-component" id="quick-links">
+                <h2>Quick Links</h2>
+                <div class="links-input-container">
+                    <form class="links-form" id="links-form">
+                        <input 
+                            type="url" 
+                            id="link-url-input" 
+                            class="link-url-input" 
+                            placeholder="Enter URL (e.g., https://example.com)" 
+                            aria-label="Link URL"
+                            required
+                        >
+                        <input 
+                            type="text" 
+                            id="link-title-input" 
+                            class="link-title-input" 
+                            placeholder="Enter title" 
+                            maxlength="100"
+                            aria-label="Link title"
+                            required
+                        >
+                        <button 
+                            type="submit" 
+                            class="btn-add-link"
+                            aria-label="Add link"
+                        >
+                            Add Link
+                        </button>
+                    </form>
+                </div>
+                <div class="links-list-container">
+                    <!-- Link buttons will be dynamically inserted here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Test Results Panel -->
+    <div class="test-results">
+        <h3>Performance Test Results</h3>
+        <div class="test-controls">
+            <button id="run-tests">Run All Tests</button>
+            <button id="show-report">Show Report</button>
+        </div>
+        <div id="test-output"></div>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script type="module">
+        import Dashboard from '../js/dashboard.js';
+        import performanceMonitor from '../js/performanceMonitor.js';
+
+        let dashboard = null;
+        const testOutput = document.getElementById('test-output');
+
+        function addTestResult(name, passed, metric, threshold) {
+            const div = document.createElement('div');
+            div.className = `test-item ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `
+                <strong>${name}</strong><br>
+                <span class="metric">${metric.toFixed(2)}ms / ${threshold}ms</span><br>
+                <span>${passed ? '✓ PASS' : '✗ FAIL'}</span>
+            `;
+            testOutput.appendChild(div);
+        }
+
+        function addTestInfo(message) {
+            const div = document.createElement('div');
+            div.className = 'test-item pending';
+            div.innerHTML = `<strong>${message}</strong>`;
+            testOutput.appendChild(div);
+        }
+
+        async function runPerformanceTests() {
+            testOutput.innerHTML = '<p>Running tests...</p>';
+
+            // Test 1: Initial Load (Requirement 12.1)
+            addTestInfo('Test 1: Initial Load Time');
+            const loadMetric = performanceMonitor.metrics.initialLoad;
+            if (loadMetric) {
+                addTestResult(
+                    'Requirement 12.1: Initial load within 1 second',
+                    loadMetric.withinThreshold,
+                    loadMetric.duration,
+                    1000
+                );
+            }
+
+            // Test 2: Interaction Response Time (Requirement 12.2)
+            addTestInfo('Test 2: Interaction Response Time');
+            
+            // Test adding a task
+            const taskInput = document.getElementById('task-input');
+            const taskForm = document.getElementById('task-form');
+            
+            taskInput.value = 'Test task for performance';
+            const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+            
+            const interactionStart = performance.now();
+            taskForm.dispatchEvent(submitEvent);
+            const interactionDuration = performance.now() - interactionStart;
+            
+            addTestResult(
+                'Requirement 12.2: Task add interaction within 100ms',
+                interactionDuration <= 100,
+                interactionDuration,
+                100
+            );
+
+            // Wait a bit for timer to run
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Test 3: Timer Updates (Requirement 12.3)
+            addTestInfo('Test 3: Timer Update Performance');
+            const timerMetrics = performanceMonitor.metrics.timerUpdates;
+            if (timerMetrics.length > 0) {
+                const avgTimerUpdate = timerMetrics.reduce((sum, m) => sum + m.duration, 0) / timerMetrics.length;
+                const maxTimerUpdate = Math.max(...timerMetrics.map(m => m.duration));
+                
+                addTestResult(
+                    'Requirement 12.3: Timer updates smoothly (avg)',
+                    avgTimerUpdate <= 100,
+                    avgTimerUpdate,
+                    100
+                );
+                
+                addTestResult(
+                    'Requirement 12.3: Timer updates smoothly (max)',
+                    maxTimerUpdate <= 100,
+                    maxTimerUpdate,
+                    100
+                );
+            }
+
+            // Test 4: Storage Operations (Requirement 12.4)
+            addTestInfo('Test 4: Storage Operation Performance');
+            const storageMetrics = performanceMonitor.metrics.storageOperations;
+            if (storageMetrics.length > 0) {
+                const avgStorage = storageMetrics.reduce((sum, m) => sum + m.duration, 0) / storageMetrics.length;
+                const maxStorage = Math.max(...storageMetrics.map(m => m.duration));
+                
+                addTestResult(
+                    'Requirement 12.4: Storage operations within 100ms (avg)',
+                    avgStorage <= 100,
+                    avgStorage,
+                    100
+                );
+                
+                addTestResult(
+                    'Requirement 12.4: Storage operations within 100ms (max)',
+                    maxStorage <= 100,
+                    maxStorage,
+                    100
+                );
+            }
+
+            // Show summary
+            addTestInfo('Test Complete - See console for detailed report');
+            performanceMonitor.logReport();
+        }
+
+        // Initialize dashboard
+        async function initDashboard() {
+            try {
+                dashboard = new Dashboard();
+                await dashboard.init();
+                
+                // Start timer to generate timer update metrics
+                const timer = dashboard.components.focusTimer;
+                if (timer) {
+                    timer.start();
+                }
+                
+                addTestInfo('Dashboard initialized. Click "Run All Tests" to start.');
+            } catch (error) {
+                console.error('Failed to start dashboard:', error);
+                testOutput.innerHTML = `<p class="test-item fail">Failed to initialize: ${error.message}</p>`;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('run-tests').addEventListener('click', runPerformanceTests);
+        document.getElementById('show-report').addEventListener('click', () => {
+            performanceMonitor.logReport();
+            alert('Performance report logged to console. Open DevTools to view.');
+        });
+
+        // Initialize on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initDashboard);
+        } else {
+            initDashboard();
+        }
+    </script>
+</body>
+</html>

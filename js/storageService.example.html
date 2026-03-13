@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StorageService Example</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 4px; }
+    button { margin: 5px; padding: 8px 16px; cursor: pointer; }
+    pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    .output { margin-top: 10px; padding: 10px; background: #e7f3ff; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>StorageService Usage Example</h1>
+  
+  <div class="section">
+    <h2>1. Initialize StorageService</h2>
+    <button onclick="initService()">Initialize</button>
+    <pre id="init-output">Click "Initialize" to create a StorageService instance</pre>
+  </div>
+
+  <div class="section">
+    <h2>2. Save Data</h2>
+    <button onclick="saveTask()">Save Task</button>
+    <button onclick="saveLinks()">Save Links</button>
+    <div class="output" id="save-output">Click buttons to save data</div>
+  </div>
+
+  <div class="section">
+    <h2>3. Load Data</h2>
+    <button onclick="loadTask()">Load Task</button>
+    <button onclick="loadLinks()">Load Links</button>
+    <div class="output" id="load-output">Click buttons to load data</div>
+  </div>
+
+  <div class="section">
+    <h2>4. View LocalStorage</h2>
+    <button onclick="viewStorage()">View All Storage Keys</button>
+    <div class="output" id="storage-output">Click to view storage contents</div>
+  </div>
+
+  <div class="section">
+    <h2>5. Clear Data</h2>
+    <button onclick="clearAll()">Clear All Namespaced Data</button>
+    <div class="output" id="clear-output">Click to clear all data</div>
+  </div>
+
+  <script type="module">
+    import StorageService from './storageService.js';
+    
+    let storageService;
+
+    window.initService = function() {
+      storageService = new StorageService('productivity-dashboard');
+      document.getElementById('init-output').textContent = 
+        `✓ StorageService initialized with namespace: "${storageService.namespace}"\n` +
+        `Storage available: ${storageService.isAvailable}`;
+    };
+
+    window.saveTask = function() {
+      if (!storageService) {
+        alert('Please initialize the service first!');
+        return;
+      }
+      
+      const task = {
+        id: 'task-' + Date.now(),
+        text: 'Complete the StorageService implementation',
+        completed: false,
+        createdAt: Date.now()
+      };
+      
+      const result = storageService.save('tasks', [task]);
+      document.getElementById('save-output').innerHTML = 
+        `<strong>Save Result:</strong> ${result ? '✓ Success' : '✗ Failed'}<br>` +
+        `<strong>Data:</strong><pre>${JSON.stringify(task, null, 2)}</pre>`;
+    };
+
+    window.saveLinks = function() {
+      if (!storageService) {
+        alert('Please initialize the service first!');
+        return;
+      }
+      
+      const links = [
+        { id: 'link-1', url: 'https://github.com', title: 'GitHub', createdAt: Date.now() },
+        { id: 'link-2', url: 'https://stackoverflow.com', title: 'Stack Overflow', createdAt: Date.now() }
+      ];
+      
+      const result = storageService.save('links', links);
+      document.getElementById('save-output').innerHTML = 
+        `<strong>Save Result:</strong> ${result ? '✓ Success' : '✗ Failed'}<br>` +
+        `<strong>Data:</strong><pre>${JSON.stringify(links, null, 2)}</pre>`;
+    };
+
+    window.loadTask = function() {
+      if (!storageService) {
+        alert('Please initialize the service first!');
+        return;
+      }
+      
+      const tasks = storageService.load('tasks');
+      document.getElementById('load-output').innerHTML = 
+        `<strong>Loaded Tasks:</strong><pre>${JSON.stringify(tasks, null, 2)}</pre>`;
+    };
+
+    window.loadLinks = function() {
+      if (!storageService) {
+        alert('Please initialize the service first!');
+        return;
+      }
+      
+      const links = storageService.load('links');
+      document.getElementById('load-output').innerHTML = 
+        `<strong>Loaded Links:</strong><pre>${JSON.stringify(links, null, 2)}</pre>`;
+    };
+
+    window.viewStorage = function() {
+      let output = '<strong>LocalStorage Contents:</strong><br>';
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const value = localStorage.getItem(key);
+        output += `<br><strong>${key}:</strong><br><pre>${value}</pre>`;
+      }
+      document.getElementById('storage-output').innerHTML = output;
+    };
+
+    window.clearAll = function() {
+      if (!storageService) {
+        alert('Please initialize the service first!');
+        return;
+      }
+      
+      const result = storageService.clear();
+      document.getElementById('clear-output').textContent = 
+        result ? '✓ All namespaced data cleared successfully' : '✗ Failed to clear data';
+      
+      // Refresh storage view
+      viewStorage();
+    };
+
+    // Auto-initialize on page load
+    initService();
+  </script>
+</body>
+</html>

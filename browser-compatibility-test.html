@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Compatibility Test - Productivity Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .browser-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #2196f3;
+        }
+
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .test-section h2 {
+            color: #2196f3;
+            margin-bottom: 15px;
+        }
+
+        .test-item {
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #ccc;
+            background: #f9f9f9;
+        }
+
+        .test-item.pass {
+            border-left-color: #4caf50;
+            background: #f1f8f4;
+        }
+
+        .test-item.fail {
+            border-left-color: #f44336;
+            background: #fef1f0;
+        }
+
+        .test-item.warning {
+            border-left-color: #ff9800;
+            background: #fff8f0;
+        }
+
+        .status {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .status.pass { color: #4caf50; }
+        .status.fail { color: #f44336; }
+        .status.warning { color: #ff9800; }
+
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 10px 10px 0;
+        }
+
+        button:hover {
+            background: #1976d2;
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .summary {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+
+        .summary h3 {
+            margin-bottom: 10px;
+        }
+
+        .code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .details {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Browser Compatibility Test Suite</h1>
+        <p>Productivity Dashboard - Requirement 11.5</p>
+
+        <div class="browser-info" id="browser-info">
+            <strong>Detecting browser information...</strong>
+        </div>
+
+        <div class="summary">
+            <h3>Test Instructions</h3>
+            <p>1. Click "Run All Tests" to execute the automated compatibility tests</p>
+            <p>2. Review the results for each test category</p>
+            <p>3. Test the actual dashboard application in this browser</p>
+            <p>4. Repeat this process in Chrome, Firefox, Edge, and Safari</p>
+        </div>
+
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="clearStorage()">Clear Local Storage</button>
+        <button onclick="location.href='index.html'">Open Dashboard</button>
+
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        // Browser detection
+        function detectBrowser() {
+            const ua = navigator.userAgent;
+            let browserName = 'Unknown';
+            let browserVersion = 'Unknown';
+
+            if (ua.indexOf('Firefox') > -1) {
+                browserName = 'Firefox';
+                browserVersion = ua.match(/Firefox\/(\d+\.\d+)/)?.[1] || 'Unknown';
+            } else if (ua.indexOf('Edg') > -1) {
+                browserName = 'Edge';
+                browserVersion = ua.match(/Edg\/(\d+\.\d+)/)?.[1] || 'Unknown';
+            } else if (ua.indexOf('Chrome') > -1 && ua.indexOf('Edg') === -1) {
+                browserName = 'Chrome';
+                browserVersion = ua.match(/Chrome\/(\d+\.\d+)/)?.[1] || 'Unknown';
+            } else if (ua.indexOf('Safari') > -1 && ua.indexOf('Chrome') === -1) {
+                browserName = 'Safari';
+                browserVersion = ua.match(/Version\/(\d+\.\d+)/)?.[1] || 'Unknown';
+            }
+
+            return { name: browserName, version: browserVersion, userAgent: ua };
+        }
+
+        // Display browser info
+        function displayBrowserInfo() {
+            const browser = detectBrowser();
+            const infoDiv = document.getElementById('browser-info');
+            infoDiv.innerHTML = `
+                <strong>Browser:</strong> ${browser.name} ${browser.version}<br>
+                <strong>Platform:</strong> ${navigator.platform}<br>
+                <strong>User Agent:</strong> <span class="code">${browser.userAgent}</span>
+            `;
+        }
+
+        // Test results storage
+        const testResults = {
+            localStorage: [],
+            dateTime: [],
+            intervals: [],
+            dom: [],
+            events: []
+        };
+
+        // Test Local Storage API
+        function testLocalStorage() {
+            const tests = [];
+
+            // Test 1: Basic availability
+            try {
+                const available = typeof(Storage) !== 'undefined';
+                tests.push({
+                    name: 'Local Storage API Available',
+                    pass: available,
+                    details: available ? 'localStorage object is available' : 'localStorage is not supported'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'Local Storage API Available',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Test 2: Write operation
+            try {
+                localStorage.setItem('test-key', 'test-value');
+                tests.push({
+                    name: 'Local Storage Write',
+                    pass: true,
+                    details: 'Successfully wrote to localStorage'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'Local Storage Write',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Test 3: Read operation
+            try {
+                const value = localStorage.getItem('test-key');
+                const pass = value === 'test-value';
+                tests.push({
+                    name: 'Local Storage Read',
+                    pass: pass,
+                    details: pass ? 'Successfully read from localStorage' : 'Read value does not match'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'Local Storage Read',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Test 4: JSON serialization
+            try {
+                const testObj = { id: 1, text: 'test', completed: false };
+                localStorage.setItem('test-json', JSON.stringify(testObj));
+                const retrieved = JSON.parse(localStorage.getItem('test-json'));
+                const pass = retrieved.id === 1 && retrieved.text === 'test';
+                tests.push({
+                    name: 'JSON Serialization',
+                    pass: pass,
+                    details: pass ? 'JSON stringify/parse works correctly' : 'JSON operations failed'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'JSON Serialization',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Test 5: Remove operation
+            try {
+                localStorage.removeItem('test-key');
+                const value = localStorage.getItem('test-key');
+                const pass = value === null;
+                tests.push({
+                    name: 'Local Storage Remove',
+                    pass: pass,
+                    details: pass ? 'Successfully removed item' : 'Item was not removed'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'Local Storage Remove',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Cleanup
+            try {
+                localStorage.removeItem('test-json');
+            } catch (e) {}
+
+            testResults.localStorage = tests;
+            return tests;
+        }
+
+        // Test Date and Time APIs
+        function testDateTime() {
+            const tests = [];
+
+            // Test 1: Date object creation
+            try {
+                const now = new Date();
+                const pass = now instanceof Date && !isNaN(now.getTime());
+                tests.push({
+                    name: 'Date Object Creation',
+                    pass: pass,
+                    details: pass ? `Current date: ${now.toString()}` : 'Date object is invalid'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'Date Object Creation',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Test 2: Date formatting methods
+            try {
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+                const pass = typeof hours === 'number' && typeof minutes === 'number' && typeof seconds === 'number';
+                tests.push({
+                    name: 'Date Formatting Methods',
+                    pass: pass,
+                    details: pass ? `Time: ${hours}:${minutes}:${seconds}` : 'Date methods failed'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'Date Formatting Methods',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Test 3: toLocaleString support
+            try {
+                const now = new Date();
+                const localeString = now.toLocaleString();
+                const pass = typeof localeString === 'string' && localeString.length > 0;
+                tests.push({
+                    name: 'toLocaleString Support',
+                    pass: pass,
+                    details: pass ? `Locale string: ${localeString}` : 'toLocaleString failed'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'toLocaleString Support',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            testResults.dateTime = tests;
+            return tests;
+        }
+
+        // Test setInterval and setTimeout
+        function testIntervals() {
+            const tests = [];
+
+            // Test 1: setInterval availability
+            try {
+                const pass = typeof setInterval === 'function';
+                tests.push({
+                    name: 'setInterval Available',
+                    pass: pass,
+                    details: pass ? 'setInterval function is available' : 'setInterval not found'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'setInterval Available',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Test 2: clearInterval availability
+            try {
+                const pass = typeof clearInterval === 'function';
+                tests.push({
+                    name: 'clearInterval Available',
+                    pass: pass,
+                    details: pass ? 'clearInterval function is available' : 'clearInterval not found'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'clearInterval Available',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Test 3: setInterval execution (async test)
+            let intervalTestPassed = false;
+            const intervalId = setInterval(() => {
+                intervalTestPassed = true;
+                clearInterval(intervalId);
+            }, 100);
+
+            setTimeout(() => {
+                tests.push({
+                    name: 'setInterval Execution',
+                    pass: intervalTestPassed,
+                    details: intervalTestPassed ? 'setInterval executed successfully' : 'setInterval did not execute'
+                });
+                testResults.intervals = tests;
+                renderTestResults();
+            }, 200);
+
+            testResults.intervals = tests;
+            return tests;
+        }
+
+        // Test DOM manipulation
+        function testDOM() {
+            const tests = [];
+
+            // Test 1: querySelector
+            try {
+                const element = document.querySelector('.container');
+                const pass = element !== null;
+                tests.push({
+                    name: 'querySelector Support',
+                    pass: pass,
+                    details: pass ? 'querySelector works correctly' : 'querySelector failed'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'querySelector Support',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Test 2: createElement
+            try {
+                const div = document.createElement('div');
+                const pass = div instanceof HTMLElement;
+                tests.push({
+                    name: 'createElement Support',
+                    pass: pass,
+                    details: pass ? 'createElement works correctly' : 'createElement failed'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'createElement Support',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Test 3: classList API
+            try {
+                const div = document.createElement('div');
+                div.classList.add('test-class');
+                const pass = div.classList.contains('test-class');
+                tests.push({
+                    name: 'classList API',
+                    pass: pass,
+                    details: pass ? 'classList API works correctly' : 'classList API failed'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'classList API',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Test 4: innerHTML
+            try {
+                const div = document.createElement('div');
+                div.innerHTML = '<span>test</span>';
+                const pass = div.innerHTML === '<span>test</span>';
+                tests.push({
+                    name: 'innerHTML Support',
+                    pass: pass,
+                    details: pass ? 'innerHTML works correctly' : 'innerHTML failed'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'innerHTML Support',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            testResults.dom = tests;
+            return tests;
+        }
+
+        // Test Event handling
+        function testEvents() {
+            const tests = [];
+
+            // Test 1: addEventListener
+            try {
+                const div = document.createElement('div');
+                let eventFired = false;
+                div.addEventListener('click', () => { eventFired = true; });
+                div.click();
+                tests.push({
+                    name: 'addEventListener Support',
+                    pass: eventFired,
+                    details: eventFired ? 'addEventListener works correctly' : 'addEventListener failed'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'addEventListener Support',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Test 2: Event object
+            try {
+                const div = document.createElement('div');
+                let eventObject = null;
+                div.addEventListener('click', (e) => { eventObject = e; });
+                div.click();
+                const pass = eventObject !== null && eventObject.type === 'click';
+                tests.push({
+                    name: 'Event Object',
+                    pass: pass,
+                    details: pass ? 'Event object is available' : 'Event object failed'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'Event Object',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            // Test 3: preventDefault
+            try {
+                const form = document.createElement('form');
+                let defaultPrevented = false;
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    defaultPrevented = e.defaultPrevented;
+                });
+                const event = new Event('submit', { cancelable: true });
+                form.dispatchEvent(event);
+                tests.push({
+                    name: 'preventDefault Support',
+                    pass: defaultPrevented,
+                    details: defaultPrevented ? 'preventDefault works correctly' : 'preventDefault failed'
+                });
+            } catch (e) {
+                tests.push({
+                    name: 'preventDefault Support',
+                    pass: false,
+                    details: `Error: ${e.message}`
+                });
+            }
+
+            testResults.events = tests;
+            return tests;
+        }
+
+        // Render test results
+        function renderTestResults() {
+            const resultsDiv = document.getElementById('test-results');
+            let html = '';
+
+            const sections = [
+                { title: 'Local Storage API Tests', key: 'localStorage' },
+                { title: 'Date and Time API Tests', key: 'dateTime' },
+                { title: 'Timer API Tests', key: 'intervals' },
+                { title: 'DOM Manipulation Tests', key: 'dom' },
+                { title: 'Event Handling Tests', key: 'events' }
+            ];
+
+            sections.forEach(section => {
+                const tests = testResults[section.key];
+                if (tests && tests.length > 0) {
+                    html += `<div class="test-section">
+                        <h2>${section.title}</h2>`;
+                    
+                    tests.forEach(test => {
+                        const statusClass = test.pass ? 'pass' : 'fail';
+                        const statusText = test.pass ? '✓ PASS' : '✗ FAIL';
+                        html += `<div class="test-item ${statusClass}">
+                            <span class="status ${statusClass}">${statusText}</span>
+                            <strong>${test.name}</strong>
+                            <div class="details">${test.details}</div>
+                        </div>`;
+                    });
+                    
+                    html += '</div>';
+                }
+            });
+
+            // Add summary
+            const totalTests = Object.values(testResults).flat().length;
+            const passedTests = Object.values(testResults).flat().filter(t => t.pass).length;
+            const failedTests = totalTests - passedTests;
+
+            html += `<div class="summary">
+                <h3>Test Summary</h3>
+                <p><strong>Total Tests:</strong> ${totalTests}</p>
+                <p><strong>Passed:</strong> <span style="color: #4caf50;">${passedTests}</span></p>
+                <p><strong>Failed:</strong> <span style="color: #f44336;">${failedTests}</span></p>
+                <p><strong>Success Rate:</strong> ${totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0}%</p>
+            </div>`;
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // Run all tests
+        function runAllTests() {
+            // Clear previous results
+            testResults.localStorage = [];
+            testResults.dateTime = [];
+            testResults.intervals = [];
+            testResults.dom = [];
+            testResults.events = [];
+
+            // Run synchronous tests
+            testLocalStorage();
+            testDateTime();
+            testDOM();
+            testEvents();
+            
+            // Run async test (intervals)
+            testIntervals();
+
+            // Render results (will be updated when async test completes)
+            renderTestResults();
+        }
+
+        // Clear storage utility
+        function clearStorage() {
+            try {
+                localStorage.clear();
+                alert('Local Storage cleared successfully!');
+            } catch (e) {
+                alert('Error clearing Local Storage: ' + e.message);
+            }
+        }
+
+        // Initialize on page load
+        displayBrowserInfo();
+    </script>
+</body>
+</html>
